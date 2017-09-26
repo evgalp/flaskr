@@ -14,6 +14,8 @@ app.config.update(dict(
 
 app.config.from_envvar('FLASKR_SETTINGS', silent=True)
 
+# ---database handling ---
+
 def connect_db():
     rv = sqlite3.connect(app.config['DATABASE'])
     rv.row_factory = sqlite3.Row
@@ -44,3 +46,50 @@ def initdb_command():
     """Initializes the database"""
     init_db()
     print('initialized the database')
+
+# ---database handling end ---
+
+# ---view functions ---
+
+@app.route('/')
+def show_enteries():
+    db = get_db()
+    cur = db.execute('select title, text from enteries order by id desc')
+    enteries = cur.fetchall()
+    return render_template('show_enteries.html', enteries=enteries)
+
+@app.route('/add', methods=['POST'])
+def add_entry():
+    if not session.get('logged_in'):
+        abort(401)
+    db = get_db()
+    db.execute('insert into enteries (title, text) values (?, ?)',
+                [request.form['title'], request.form['text']])
+    db.commit()
+    flash('new entry was scuccesfully posted')
+    return redirect(url_for('show_enteries'))
+
+# ---view functions end---
+
+# ---login and logout ---
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    error = None
+    if request.method == 'POST':
+        if request.form['username'] != app.config['USERNAME']:
+            error = 'invalid username'
+        elif request.form['password'] != app.config['PASSWORD']:
+            error = 'invalid password'
+        else:
+            session['logged_in'] = True
+            flash('You were logged in ')
+            return redirect(url_for('show_enteries'))
+
+@app.route('/logout')
+def logout():
+    session.pop('logged_in', None)
+    flash('You were logged out')
+    return redirect(url_for('show_enteries'))
+
+# ---login and logout end---
