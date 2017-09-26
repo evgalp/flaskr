@@ -52,22 +52,22 @@ def initdb_command():
 # ---view functions ---
 
 @app.route('/')
-def show_enteries():
+def show_entries():
     db = get_db()
-    cur = db.execute('select title, text from enteries order by id desc')
-    enteries = cur.fetchall()
-    return render_template('show_enteries.html', enteries=enteries)
+    cur = db.execute('select title, text from entries order by id desc')
+    entries = cur.fetchall()
+    return render_template('show_entries.html', entries=entries)
 
 @app.route('/add', methods=['POST'])
 def add_entry():
     if not session.get('logged_in'):
         abort(401)
     db = get_db()
-    db.execute('insert into enteries (title, text) values (?, ?)',
+    db.execute('insert into entries (title, text) values (?, ?)',
                 [request.form['title'], request.form['text']])
     db.commit()
     flash('new entry was scuccesfully posted')
-    return redirect(url_for('show_enteries'))
+    return redirect(url_for('show_entries'))
 
 # ---view functions end---
 
@@ -84,12 +84,13 @@ def login():
         else:
             session['logged_in'] = True
             flash('You were logged in ')
-            return redirect(url_for('show_enteries'))
+            return redirect(url_for('show_entries'))
+    return render_template('login.html', error=error)
 
 @app.route('/logout')
 def logout():
     session.pop('logged_in', None)
     flash('You were logged out')
-    return redirect(url_for('show_enteries'))
+    return redirect(url_for('show_entries'))
 
 # ---login and logout end---
